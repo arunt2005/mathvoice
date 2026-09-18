@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Subtraction Math Practice</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Font - Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    /* Timer Progress Bar Animation */
+    @keyframes shrinkWidth {
+      from { width: 100%; }
+      to { width: 0%; }
+    }
+
+    .timer-bar-active {
+      animation: shrinkWidth 3s linear forwards;
+    }
+
+    /* Speech Pulse Effect */
+    @keyframes micPulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { transform: scale(1.08); box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    .mic-recording {
+      animation: micPulse 1.2s infinite;
+    }
+
+    /* Pop Animations for Feedback */
+    @keyframes popIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      80% { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .pop-in {
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+  <!-- Top Navigation Header -->
+  <header class="w-full bg-slate-800/80 backdrop-blur-md border-b border-slate-700/60 sticky top-0 z-20">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+          <i class="fa-solid me-0 fa-calculator text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">MathVoice</h1>
+          <p class="text-xs text-slate-400">Single-Digit Subtraction Practice</p>
+        </div>
+      </div>
+
+      <!-- Quick Controls -->
+      <div class="flex items-center space-x-2">
+        <button id="viewResultsHeaderBtn" onclick="showResultsModal()" class="px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-300 hover:text-white bg-slate-700/70 hover:bg-slate-700 rounded-lg transition-all flex items-center gap-2">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Results</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-3xl w-full mx-auto px-4 py-6 flex-1 flex flex-col justify-center items-center">
+
+    <!-- Browser Support Warning Banner -->
+    <div id="browserWarning" class="hidden w-full mb-4 p-4 bg-amber-500/20 border border-amber-500/40 rounded-xl text-amber-200 text-xs sm:text-sm flex items-center gap-3">
+      <i class="fa-solid fa-triangle-exclamation text-amber-400 text-lg flex-shrink-0"></i>
+      <span>Speech recognition is not natively supported in this browser. Please use <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> for best performance.</span>
+    </div>
+
+    <!-- Live Statistics Strip -->
+    <div class="w-full grid grid-cols-4 gap-2 sm:gap-4 mb-6 text-center">
+      <div class="bg-slate-800/60 border border-slate-700/50 rounded-xl p-2.5 sm:p-3">
+        <span class="text-xs text-slate-400 block font-medium uppercase tracking-wider">Total</span>
+        <span id="statTotal" class="text-lg sm:text-2xl font-black text-slate-200">0</span>
+      </div>
+      <div class="bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-2.5 sm:p-3">
+        <span class="text-xs text-emerald-400/80 block font-medium uppercase tracking-wider">Correct</span>
+        <span id="statCorrect" class="text-lg sm:text-2xl font-black text-emerald-400">0</span>
+      </div>
+      <div class="bg-rose-950/40 border border-rose-500/30 rounded-xl p-2.5 sm:p-3">
+        <span class="text-xs text-rose-400/80 block font-medium uppercase tracking-wider">Wrong</span>
+        <span id="statWrong" class="text-lg sm:text-2xl font-black text-rose-400">0</span>
+      </div>
+      <div class="bg-amber-950/40 border border-amber-500/30 rounded-xl p-2.5 sm:p-3">
+        <span class="text-xs text-amber-400/80 block font-medium uppercase tracking-wider">Skipped</span>
+        <span id="statSkipped" class="text-lg sm:text-2xl font-black text-amber-400">0</span>
+      </div>
+    </div>
+
+    <!-- Math Question Card -->
+    <div class="w-full bg-slate-800 border border-slate-700 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden flex flex-col items-center">
+      
+      <!-- 3-Second Timer Progress Bar -->
+      <div class="absolute top-0 left-0 right-0 h-2 bg-slate-700/50">
+        <div id="timerBar" class="h-full bg-indigo-500 w-0"></div>
+      </div>
+
+      <!-- Question Counter & Timer Badge -->
+      <div class="w-full flex justify-between items-center mb-6 text-xs sm:text-sm font-semibold text-slate-400">
+        <span id="questionNumLabel">Question #0</span>
+        <span id="timerCountdown" class="bg-slate-700/80 text-indigo-300 px-3 py-1 rounded-full font-mono font-bold flex items-center gap-1.5">
+          <i class="fa-regular fa-clock"></i> <span id="timeLeft">3.0s</span>
+        </span>
+      </div>
+
+      <!-- Mathematical Expression Display -->
+      <div id="questionDisplayContainer" class="min-h-[140px] sm:min-h-[180px] flex items-center justify-center relative w-full my-2">
+        <!-- Start Screen Placeholder -->
+        <div id="startPlaceholder" class="text-center">
+          <div class="w-16 h-16 bg-indigo-500/10 text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-3 border border-indigo-500/20">
+            <i class="fa-solid fa-microphone-lines text-2xl"></i>
+          </div>
+          <p class="text-slate-300 font-medium">Ready to test your subtraction speed?</p>
+          <p class="text-xs text-slate-500 mt-1">Questions refresh every 3 seconds. Speak answers out loud!</p>
+        </div>
+
+        <!-- Math Question Expression -->
+        <div id="questionBox" class="hidden text-5xl sm:text-7xl font-black tracking-tight text-white flex items-center justify-center gap-3 sm:gap-6 font-mono">
+          <span id="numA" class="text-indigo-400">5</span>
+          <span class="text-slate-500">-</span>
+          <span id="numB" class="text-cyan-400">2</span>
+          <span class="text-slate-500">=</span>
+          <span id="userAnswerBox" class="min-w-[1.2em] text-center border-b-4 border-indigo-500/50 text-indigo-200">?</span>
+        </div>
+
+        <!-- Feedback Overlay Icon -->
+        <div id="feedbackOverlay" class="absolute inset-0 flex items-center justify-center bg-slate-800/90 backdrop-blur-sm rounded-2xl hidden z-10 pop-in">
+          <div id="feedbackIcon" class="flex flex-col items-center gap-2">
+            <!-- Icon dynamically inserted -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Voice Input / Mic Status Display -->
+      <div class="w-full mt-4 pt-6 border-t border-slate-700/60 flex flex-col items-center">
+        <div class="flex items-center gap-3">
+          <div id="micIndicator" class="w-10 h-10 rounded-full bg-slate-700 text-slate-400 flex items-center justify-center transition-colors">
+            <i id="micIcon" class="fa-solid fa-microphone text-base"></i>
+          </div>
+          <div class="text-left">
+            <p id="speechStatusText" class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Voice Recognition Off</p>
+            <p id="spokenTranscriptText" class="text-sm font-medium text-slate-200 min-h-[20px]">
+              <span class="text-slate-500 italic">Click "Start Quiz" to begin listening...</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls Row -->
+    <div class="w-full mt-6 flex flex-col sm:flex-row gap-3 justify-center items-center">
+      <button id="startQuizBtn" onclick="toggleQuizState()" class="w-full sm:w-auto px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 hover:shadow-indigo-500/50 transition-all flex items-center justify-center gap-2 text-base">
+        <i id="startBtnIcon" class="fa-solid fa-play"></i>
+        <span id="startBtnText">Start Quiz</span>
+      </button>
+
+      <button id="pauseQuizBtn" onclick="pauseQuiz()" disabled class="w-full sm:w-auto px-6 py-3.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-300 font-semibold rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-2 text-base cursor-pointer disabled:cursor-not-allowed">
+        <i class="fa-solid fa-pause"></i>
+        <span>Pause</span>
+      </button>
+
+      <button id="resultsBtn" onclick="showResultsModal()" class="w-full sm:w-auto px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-2 text-base">
+        <i class="fa-solid fa-square-poll-vertical text-indigo-400"></i>
+        <span>View Results</span>
+      </button>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full py-4 text-center text-xs text-slate-500 border-t border-slate-800">
+    <p>Supports English Speech Input • Optimized for 3-Second Quick Fire Math</p>
+  </footer>
+
+  <!-- Modal Dialog: Full Results Summary -->
+  <div id="resultsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative flex flex-col max-h-[90vh]">
+      
+      <!-- Close Button -->
+      <button onclick="hideResultsModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-700/50 transition-colors">
+        <i class="fa-solid fa-xmark text-xl"></i>
+      </button>
+
+      <!-- Modal Title -->
+      <div class="mb-6 flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-trophy"></i>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-white">Quiz Session Summary</h2>
+          <p class="text-xs text-slate-400">Performance report stored in memory</p>
+        </div>
+      </div>
+
+      <!-- Score Overview Header Box -->
+      <div class="bg-slate-900/80 border border-slate-700/80 rounded-2xl p-5 text-center mb-6">
+        <span class="text-xs uppercase tracking-widest text-slate-400 font-semibold block mb-1">Accuracy Score</span>
+        <div id="modalScorePercentage" class="text-4xl sm:text-5xl font-black text-indigo-400 mb-2">0%</div>
+        <p id="modalFeedbackMsg" class="text-xs sm:text-sm text-slate-300">Start a quiz to view your score!</p>
+      </div>
+
+      <!-- Detailed Breakdown Cards -->
+      <div class="grid grid-cols-2 gap-3 mb-6">
+        <div class="bg-slate-700/40 border border-slate-700 p-3.5 rounded-xl flex items-center justify-between">
+          <div>
+            <p class="text-xs text-slate-400 font-medium">Total Questions</p>
+            <p id="modalTotal" class="text-xl font-bold text-white">0</p>
+          </div>
+          <i class="fa-solid fa-list-ol text-slate-500 text-xl"></i>
+        </div>
+
+        <div class="bg-emerald-950/30 border border-emerald-500/20 p-3.5 rounded-xl flex items-center justify-between">
+          <div>
+            <p class="text-xs text-emerald-400/80 font-medium">Correct Answers</p>
+            <p id="modalCorrect" class="text-xl font-bold text-emerald-400">0</p>
+          </div>
+          <i class="fa-solid fa-circle-check text-emerald-500/50 text-xl"></i>
+        </div>
+
+        <div class="bg-rose-950/30 border border-rose-500/20 p-3.5 rounded-xl flex items-center justify-between">
+          <div>
+            <p class="text-xs text-rose-400/80 font-medium">Wrong Answers</p>
+            <p id="modalWrong" class="text-xl font-bold text-rose-400">0</p>
+          </div>
+          <i class="fa-solid fa-circle-xmark text-rose-500/50 text-xl"></i>
+        </div>
+
+        <div class="bg-amber-950/30 border border-amber-500/20 p-3.5 rounded-xl flex items-center justify-between">
+          <div>
+            <p class="text-xs text-amber-400/80 font-medium">Unanswered</p>
+            <p id="modalSkipped" class="text-xl font-bold text-amber-400">0</p>
+          </div>
+          <i class="fa-solid fa-clock-rotate-left text-amber-500/50 text-xl"></i>
+        </div>
+      </div>
+
+      <!-- Action Buttons in Modal -->
+      <div class="flex gap-3 mt-auto pt-2 border-t border-slate-700/60">
+        <button onclick="resetStats(); hideResultsModal();" class="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold rounded-xl transition-colors text-sm flex items-center justify-center gap-2">
+          <i class="fa-solid fa-rotate text-xs"></i>
+          <span>Reset Memory</span>
+        </button>
+        <button onclick="hideResultsModal(); if(!isQuizRunning) toggleQuizState();" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition-all text-sm flex items-center justify-center gap-2">
+          <i class="fa-solid fa-play text-xs"></i>
+          <span>Play Quiz</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // APPLICATION STATE & MEMORY STORAGE
+    // ==========================================
+    const sessionStats = {
+      totalQuestions: 0,
+      correctAnswers: 0,
+      wrongAnswers: 0,
+      unanswered: 0
+    };
+
+    let isQuizRunning = false;
+    let isPaused = false;
+    let currentQuestion = { a: 0, b: 0, answer: 0 };
+    let questionAnswered = false; // Flag to prevent duplicate scoring per question window
+    
+    // Timer Variables
+    const QUESTION_DURATION = 3000; // 3 seconds per requirements
+    let timerInterval = null;
+    let timerStartTime = 0;
+    let remainingTimeOnPause = QUESTION_DURATION;
+
+    // Speech Recognition Reference
+    let recognition = null;
+    let isSpeechRecognitionActive = false;
+
+    // ==========================================
+    // WORD-TO-NUMBER MAPPING (HANDLES HOMOPHONES)
+    // ==========================================
+    const numberWordsMap = {
+      "zero": 0, "hero": 0, "oh": 0, "nil": 0,
+      "one": 1, "won": 1, "juan": 1,
+      "two": 2, "to": 2, "too": 2, "tu": 2,
+      "three": 3, "tree": 3, "free": 3,
+      "four": 4, "for": 4, "fore": 4, "door": 4,
+      "five": 5, "hive": 5,
+      "six": 6, "sex text": 6, "sticks": 6,
+      "seven": 7, "heaven": 7,
+      "eight": 8, "ate": 8, "ait": 8,
+      "nine": 9, "nein": 9, "line": 9,
+      "0": 0, "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9
+    };
+
+    // ==========================================
+    // DOM ELEMENTS
+    // ==========================================
+    const startPlaceholder = document.getElementById('startPlaceholder');
+    const questionBox = document.getElementById('questionBox');
+    const numA = document.getElementById('numA');
+    const numB = document.getElementById('numB');
+    const userAnswerBox = document.getElementById('userAnswerBox');
+    const timerBar = document.getElementById('timerBar');
+    const timeLeftDisplay = document.getElementById('timeLeft');
+    const questionNumLabel = document.getElementById('questionNumLabel');
+    const feedbackOverlay = document.getElementById('feedbackOverlay');
+    const feedbackIcon = document.getElementById('feedbackIcon');
+
+    const statTotal = document.getElementById('statTotal');
+    const statCorrect = document.getElementById('statCorrect');
+    const statWrong = document.getElementById('statWrong');
+    const statSkipped = document.getElementById('statSkipped');
+
+    const startQuizBtn = document.getElementById('startQuizBtn');
+    const startBtnIcon = document.getElementById('startBtnIcon');
+    const startBtnText = document.getElementById('startBtnText');
+    const pauseQuizBtn = document.getElementById('pauseQuizBtn');
+
+    const micIndicator = document.getElementById('micIndicator');
+    const micIcon = document.getElementById('micIcon');
+    const speechStatusText = document.getElementById('speechStatusText');
+    const spokenTranscriptText = document.getElementById('spokenTranscriptText');
+
+    // ==========================================
+    // SPEECH RECOGNITION SETUP
+    // ==========================================
+    function initializeSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        document.getElementById('browserWarning').classList.remove('hidden');
+        speechStatusText.textContent = "Speech API Unavailable";
+        spokenTranscriptText.innerHTML = `<span class="text-rose-400">Speech recognition is not supported in this browser.</span>`;
+        return false;
+      }
+
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        isSpeechRecognitionActive = true;
+        updateMicUI(true);
+      };
+
+      recognition.onend = () => {
+        isSpeechRecognitionActive = false;
+        updateMicUI(false);
+        // Restart speech recognition automatically if quiz is still active
+        if (isQuizRunning && !isPaused) {
+          try {
+            recognition.start();
+          } catch (e) {
+            console.log("Speech recognition auto-restart handled:", e);
+          }
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.warn("Speech Recognition Error:", event.error);
+        if (event.error === 'not-allowed') {
+          speechStatusText.textContent = "Mic Permission Denied";
+          spokenTranscriptText.innerHTML = `<span class="text-rose-400">Please allow microphone permissions to speak!</span>`;
+        }
+      };
+
+      recognition.onresult = (event) => {
+        if (!isQuizRunning || isPaused || questionAnswered) return;
+
+        let latestTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          latestTranscript += event.results[i][0].transcript;
+        }
+
+        latestTranscript = latestTranscript.trim().toLowerCase();
+        if (!latestTranscript) return;
+
+        spokenTranscriptText.textContent = `"${latestTranscript}"`;
+        
+        // Parse numbers from spoken phrases
+        const parsedDigit = parseSpokenDigit(latestTranscript);
+        if (parsedDigit !== null) {
+          validateAnswer(parsedDigit);
+        }
+      };
+
+      return true;
+    }
+
+    // Parse spoken text to single integer (0-9)
+    function parseSpokenDigit(phrase) {
+      const words = phrase.split(/\s+/);
+      // Scan reverse (latest spoken word first)
+      for (let i = words.length - 1; i >= 0; i--) {
+        const cleanWord = words[i].replace(/[^a-z0-9]/g, '');
+        if (numberWordsMap.hasOwnProperty(cleanWord)) {
+          return numberWordsMap[cleanWord];
+        }
+      }
+      return null;
+    }
+
+    function updateMicUI(listening) {
+      if (listening) {
+        micIndicator.className = "w-10 h-10 rounded-full bg-rose-500 text-white flex items-center justify-center mic-recording";
+        speechStatusText.textContent = "Listening Active";
+        speechStatusText.className = "text-xs font-semibold text-rose-400 uppercase tracking-wider";
+      } else {
+        micIndicator.className = "w-10 h-10 rounded-full bg-slate-700 text-slate-400 flex items-center justify-center";
+        speechStatusText.textContent = "Mic Idle";
+        speechStatusText.className = "text-xs font-semibold text-slate-400 uppercase tracking-wider";
+      }
+    }
+
+    function startListening() {
+      if (!recognition && !initializeSpeechRecognition()) return;
+      if (!isSpeechRecognitionActive) {
+        try {
+          recognition.start();
+        } catch (e) {
+          console.log("Speech recognition start request skipped:", e);
+        }
+      }
+    }
+
+    function stopListening() {
+      if (recognition && isSpeechRecognitionActive) {
+        recognition.stop();
+      }
+    }
+
+    // ==========================================
+    // QUIZ ENGINE & TIMING
+    // ==========================================
+    function toggleQuizState() {
+      if (!isQuizRunning) {
+        // Start Quiz
+        isQuizRunning = true;
+        isPaused = false;
+        
+        startBtnText.textContent = "Stop Quiz";
+        startBtnIcon.className = "fa-solid fa-square";
+        startQuizBtn.className = "w-full sm:w-auto px-8 py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl shadow-lg shadow-rose-600/30 transition-all flex items-center justify-center gap-2 text-base";
+        pauseQuizBtn.disabled = false;
+
+        startPlaceholder.classList.add('hidden');
+        questionBox.classList.remove('hidden');
+
+        startListening();
+        nextQuestion();
+      } else {
+        // Stop Quiz
+        stopQuiz();
+      }
+    }
+
+    function stopQuiz() {
+      isQuizRunning = false;
+      isPaused = false;
+      clearInterval(timerInterval);
+
+      startBtnText.textContent = "Start Quiz";
+      startBtnIcon.className = "fa-solid fa-play";
+      startQuizBtn.className = "w-full sm:w-auto px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 text-base";
+      pauseQuizBtn.disabled = true;
+      pauseQuizBtn.innerHTML = `<i class="fa-solid fa-pause"></i><span>Pause</span>`;
+
+      // Reset timer UI
+      timerBar.style.animation = 'none';
+      timerBar.style.width = '0%';
+      timeLeftDisplay.textContent = '3.0s';
+      questionBox.classList.add('hidden');
+      startPlaceholder.classList.remove('hidden');
+      feedbackOverlay.classList.add('hidden');
+
+      spokenTranscriptText.innerHTML = `<span class="text-slate-500 italic">Quiz stopped. Click Start to resume...</span>`;
+      stopListening();
+    }
+
+    function pauseQuiz() {
+      if (!isQuizRunning) return;
+
+      if (!isPaused) {
+        // Pause execution
+        isPaused = true;
+        clearInterval(timerInterval);
+        timerBar.style.animationPlayState = 'paused';
+        pauseQuizBtn.innerHTML = `<i class="fa-solid fa-play"></i><span>Resume</span>`;
+        pauseQuizBtn.className = "w-full sm:w-auto px-6 py-3.5 bg-amber-600 hover:bg-amber-500 text-white font-semibold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-base cursor-pointer";
+        speechStatusText.textContent = "Quiz Paused";
+        spokenTranscriptText.innerHTML = `<span class="text-amber-400 font-medium">Timer paused. Voice input on hold.</span>`;
+        stopListening();
+      } else {
+        // Resume execution
+        isPaused = false;
+        pauseQuizBtn.innerHTML = `<i class="fa-solid fa-pause"></i><span>Pause</span>`;
+        pauseQuizBtn.className = "w-full sm:w-auto px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-2 text-base cursor-pointer";
+        startListening();
+        
+        // Resume timer with remaining time
+        startQuestionTimer(remainingTimeOnPause);
+      }
+    }
+
+    function generateSingleDigitQuestion() {
+      // Rule 1: Single digit 0-9, subtraction result >= 0
+      const first = Math.floor(Math.random() * 10); // 0 to 9
+      const second = Math.floor(Math.random() * (first + 1)); // 0 to first number
+      const answer = first - second;
+
+      return { a: first, b: second, answer: answer };
+    }
+
+    function nextQuestion() {
+      if (!isQuizRunning || isPaused) return;
+
+      // Hide previous feedback
+      feedbackOverlay.classList.add('hidden');
+      questionAnswered = false;
+
+      // Increment stats total
+      sessionStats.totalQuestions++;
+      updateLiveStatsUI();
+
+      // Generate math problem
+      currentQuestion = generateSingleDigitQuestion();
+      numA.textContent = currentQuestion.a;
+      numB.textContent = currentQuestion.b;
+      userAnswerBox.textContent = "?";
+      userAnswerBox.className = "min-w-[1.2em] text-center border-b-4 border-indigo-500/50 text-indigo-200";
+
+      questionNumLabel.textContent = `Question #${sessionStats.totalQuestions}`;
+      spokenTranscriptText.innerHTML = `<span class="text-slate-400 italic">Say your answer out loud...</span>`;
+
+      // Trigger 3-second timer bar
+      startQuestionTimer(QUESTION_DURATION);
+    }
+
+    function startQuestionTimer(durationMs) {
+      clearInterval(timerInterval);
+      
+      const startTime = Date.now();
+      timerStartTime = startTime;
+      
+      // Reset CSS animation on timer bar
+      timerBar.style.animation = 'none';
+      timerBar.offsetHeight; // trigger reflow
+      timerBar.style.animation = `shrinkWidth ${durationMs / 1000}s linear forwards`;
+      timerBar.style.animationPlayState = 'running';
+
+      timerInterval = setInterval(() => {
+        if (isPaused) return;
+
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, durationMs - elapsed);
+        remainingTimeOnPause = remaining;
+
+        timeLeftDisplay.textContent = (remaining / 1000).toFixed(1) + 's';
+
+        if (remaining <= 0) {
+          clearInterval(timerInterval);
+          handleTimeExpired();
+        }
+      }, 50);
+    }
+
+    function handleTimeExpired() {
+      if (!questionAnswered) {
+        // Rule 4: Mark as unanswered if no answer spoken in 3s
+        sessionStats.unanswered++;
+        updateLiveStatsUI();
+        showFeedback(false, "Skipped!", "Unanswered", "fa-regular fa-clock", "text-amber-400");
+      }
+
+      // Schedule next question automatically after brief feedback delay
+      setTimeout(() => {
+        if (isQuizRunning && !isPaused) {
+          nextQuestion();
+        }
+      }, 600);
+    }
+
+    // ==========================================
+    // ANSWER VALIDATION & FEEDBACK
+    // ==========================================
+    function validateAnswer(spokenNumber) {
+      if (questionAnswered) return;
+      questionAnswered = true;
+
+      // Pause timer display update
+      clearInterval(timerInterval);
+      timerBar.style.animationPlayState = 'paused';
+
+      userAnswerBox.textContent = spokenNumber;
+
+      const isCorrect = (spokenNumber === currentQuestion.answer);
+
+      if (isCorrect) {
+        sessionStats.correctAnswers++;
+        userAnswerBox.className = "min-w-[1.2em] text-center border-b-4 border-emerald-500 text-emerald-400 font-black";
+        showFeedback(true, `Correct!`, `Answered ${spokenNumber}`, "fa-solid fa-check", "text-emerald-400");
+      } else {
+        sessionStats.wrongAnswers++;
+        userAnswerBox.className = "min-w-[1.2em] text-center border-b-4 border-rose-500 text-rose-400 font-black";
+        showFeedback(false, `Incorrect!`, `Correct answer was ${currentQuestion.answer}`, "fa-solid fa-xmark", "text-rose-400");
+      }
+
+      updateLiveStatsUI();
+
+      // Proceed to next question automatically
+      setTimeout(() => {
+        if (isQuizRunning && !isPaused) {
+          nextQuestion();
+        }
+      }, 700);
+    }
+
+    function showFeedback(isCorrect, title, subtitle, iconClass, colorClass) {
+      feedbackIcon.innerHTML = `
+        <div class="w-16 h-16 rounded-full flex items-center justify-center text-4xl mb-1 ${isCorrect ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'}">
+          <i class="${iconClass}"></i>
+        </div>
+        <span class="text-2xl font-black ${colorClass}">${title}</span>
+        <span class="text-xs text-slate-300 font-medium">${subtitle}</span>
+      `;
+      feedbackOverlay.classList.remove('hidden');
+    }
+
+    function updateLiveStatsUI() {
+      statTotal.textContent = sessionStats.totalQuestions;
+      statCorrect.textContent = sessionStats.correctAnswers;
+      statWrong.textContent = sessionStats.wrongAnswers;
+      statSkipped.textContent = sessionStats.unanswered;
+    }
+
+    // ==========================================
+    // RESULTS & STATS MODAL (REQUIREMENT 5)
+    // ==========================================
+    function showResultsModal() {
+      // Pause quiz while reviewing modal
+      if (isQuizRunning && !isPaused) {
+        pauseQuiz();
+      }
+
+      // Calculate accuracy
+      const answeredCount = sessionStats.correctAnswers + sessionStats.wrongAnswers;
+      const accuracyPercentage = answeredCount > 0 
+        ? Math.round((sessionStats.correctAnswers / sessionStats.totalQuestions) * 100) 
+        : 0;
+
+      // Populate modal fields
+      document.getElementById('modalTotal').textContent = sessionStats.totalQuestions;
+      document.getElementById('modalCorrect').textContent = sessionStats.correctAnswers;
+      document.getElementById('modalWrong').textContent = sessionStats.wrongAnswers;
+      document.getElementById('modalSkipped').textContent = sessionStats.unanswered;
+      document.getElementById('modalScorePercentage').textContent = `${accuracyPercentage}%`;
+
+      // Custom message based on score
+      const feedbackMsg = document.getElementById('modalFeedbackMsg');
+      if (sessionStats.totalQuestions === 0) {
+        feedbackMsg.textContent = "No questions completed yet in memory.";
+      } else if (accuracyPercentage >= 80) {
+        feedbackMsg.textContent = "🌟 Outstanding subtraction math speed!";
+      } else if (accuracyPercentage >= 50) {
+        feedbackMsg.textContent = "👍 Good job! Keep practicing your speech speed.";
+      } else {
+        feedbackMsg.textContent = "💪 Keep practicing! You will get faster.";
+      }
+
+      // Display Modal
+      const modal = document.getElementById('resultsModal');
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+      }, 10);
+    }
+
+    function hideResultsModal() {
+      const modal = document.getElementById('resultsModal');
+      modal.classList.add('opacity-0');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+
+    function resetStats() {
+      sessionStats.totalQuestions = 0;
+      sessionStats.correctAnswers = 0;
+      sessionStats.wrongAnswers = 0;
+      sessionStats.unanswered = 0;
+      updateLiveStatsUI();
+      
+      document.getElementById('modalTotal').textContent = 0;
+      document.getElementById('modalCorrect').textContent = 0;
+      document.getElementById('modalWrong').textContent = 0;
+      document.getElementById('modalSkipped').textContent = 0;
+      document.getElementById('modalScorePercentage').textContent = "0%";
+      document.getElementById('modalFeedbackMsg').textContent = "Memory stats cleared successfully!";
+    }
+
+    // Initialize Web Speech on Page Load
+    window.addEventListener('DOMContentLoaded', () => {
+      initializeSpeechRecognition();
+    });
+  </script>
+</body>
+</html>
