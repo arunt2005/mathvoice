@@ -7,31 +7,32 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: #f0f4f8; color: #102a43; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
-    .card { background: #fff; width: 100%; max-width: 400px; border-radius: 16px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
-    h1 { font-size: 1.4rem; color: #2b6cb0; margin-bottom: 8px; }
-    .subtitle { font-size: 0.85rem; color: #627d98; margin-bottom: 20px; }
+    .card { background: #fff; width: 100%; max-width: 400px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+    h1 { font-size: 1.4rem; color: #2b6cb0; margin-bottom: 6px; }
+    .subtitle { font-size: 0.85rem; color: #627d98; margin-bottom: 15px; }
     
-    .btn { background: #2b6cb0; color: #fff; border: none; padding: 14px 24px; font-size: 1.1rem; font-weight: 600; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 10px; -webkit-tap-highlight-color: transparent; }
+    .btn { background: #2b6cb0; color: #fff; border: none; padding: 12px 20px; font-size: 1.1rem; font-weight: 600; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 8px; }
     .btn:active { transform: scale(0.98); background: #2c5282; }
     .btn-secondary { background: #4a5568; }
 
-    .timer-container { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 15px; }
-    .timer-bar { height: 100%; width: 100%; background: #3182ce; transition: width 0.05s linear; }
+    .timer-container { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 12px; }
+    .timer-bar { height: 100%; width: 100%; background: #3182ce; }
 
-    .question-box { font-size: 3.5rem; font-weight: 800; margin: 10px 0; color: #102a43; }
-    .feedback { font-size: 1.8rem; font-weight: bold; min-height: 40px; }
+    .question-box { font-size: 3.5rem; font-weight: 800; margin: 5px 0; color: #102a43; }
+    .feedback { font-size: 1.6rem; font-weight: bold; min-height: 38px; }
     .feedback.correct { color: #38a169; }
     .feedback.incorrect { color: #e53e3e; }
     .feedback.skipped { color: #d69e2e; }
 
-    .transcript-box { font-size: 0.95rem; color: #2b6cb0; background: #ebf8ff; padding: 12px; border-radius: 8px; margin-top: 15px; font-weight: 600; border: 1px solid #bee3f8; min-height: 48px; display: flex; align-items: center; justify-content: center; }
-    .status-indicator { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.8rem; color: #38a169; margin-top: 10px; }
-    .dot { width: 8px; height: 8px; background: #38a169; border-radius: 50%; }
-    .dot.active { animation: blink 0.8s infinite; }
-    
-    @keyframes blink { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+    .transcript-box { font-size: 0.9rem; color: #2b6cb0; background: #ebf8ff; padding: 10px; border-radius: 8px; margin: 10px 0; font-weight: 600; border: 1px solid #bee3f8; min-height: 42px; display: flex; align-items: center; justify-content: center; }
 
-    .hud { display: flex; justify-content: space-between; background: #f7fafc; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 15px; border: 1px solid #edf2f7; }
+    .hud { display: flex; justify-content: space-between; background: #f7fafc; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 12px; border: 1px solid #edf2f7; }
+    
+    /* Quick Tap Fallback Buttons */
+    .keypad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 10px; }
+    .key-btn { background: #edf2f7; border: 1px solid #cbd5e0; border-radius: 6px; padding: 8px 0; font-size: 1.1rem; font-weight: bold; color: #2d3748; cursor: pointer; }
+    .key-btn:active { background: #cbd5e0; }
+
     .hide { display: none !important; }
   </style>
 </head>
@@ -43,10 +44,10 @@
 
     <!-- Start View -->
     <div id="start-view">
-      <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 20px;">
-        Tap <strong>Start Practice</strong> and allow microphone access when prompted.
+      <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 15px;">
+        Tap <strong>Start Quiz</strong>. Speak your answer or tap a digit button below if voice latency occurs.
       </p>
-      <button class="btn" id="start-btn">Start Practice</button>
+      <button class="btn" id="start-btn">Start Quiz</button>
     </div>
 
     <!-- Active Quiz View -->
@@ -60,14 +61,23 @@
       <div id="question" class="question-box">?-?</div>
       <div id="feedback" class="feedback"></div>
 
-      <div id="heard-text" class="transcript-box">Tap start to speak...</div>
-      
-      <div class="status-indicator">
-        <div id="dot" class="dot"></div>
-        <span id="mic-status">Mic Ready</span>
+      <div id="heard-text" class="transcript-box">Listening continuously...</div>
+
+      <!-- Keypad Backup for Mobile Speed -->
+      <div class="keypad">
+        <button class="key-btn" onclick="handleInput(0)">0</button>
+        <button class="key-btn" onclick="handleInput(1)">1</button>
+        <button class="key-btn" onclick="handleInput(2)">2</button>
+        <button class="key-btn" onclick="handleInput(3)">3</button>
+        <button class="key-btn" onclick="handleInput(4)">4</button>
+        <button class="key-btn" onclick="handleInput(5)">5</button>
+        <button class="key-btn" onclick="handleInput(6)">6</button>
+        <button class="key-btn" onclick="handleInput(7)">7</button>
+        <button class="key-btn" onclick="handleInput(8)">8</button>
+        <button class="key-btn" onclick="handleInput(9)">9</button>
       </div>
 
-      <button class="btn btn-secondary" id="finish-btn" style="margin-top: 20px;">Stop & View Results</button>
+      <button class="btn btn-secondary" id="finish-btn" style="margin-top: 15px;">Stop & View Results</button>
     </div>
 
     <!-- Results View -->
@@ -85,8 +95,8 @@
 
   <script>
     const NUMBER_MAP = {
-      'zero': 0, 'oh': 0, 'zip': 0, 'nil': 0,
-      'one': 1, 'won': 1, '1st': 1,
+      'zero': 0, 'oh': 0, 'zip': 0,
+      'one': 1, 'won': 1,
       'two': 2, 'to': 2, 'too': 2,
       'three': 3, 'tree': 3, 'free': 3,
       'four': 4, 'for': 4, 'fore': 4,
@@ -94,7 +104,7 @@
       'six': 6, 'sex': 6,
       'seven': 7,
       'eight': 8, 'ate': 8,
-      'nine': 9, 'nein': 9
+      'nine': 9
     };
 
     let currentAns = null;
@@ -107,53 +117,35 @@
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition = null;
-    let isRunning = false;
+    let quizActive = false;
 
-    function initSpeech() {
-      if (!SpeechRecognition) return null;
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
 
-      const rec = new SpeechRecognition();
-      rec.continuous = true;
-      rec.interimResults = true;
-      rec.maxAlternatives = 3;
-      rec.lang = 'en-US';
-
-      rec.onstart = () => {
-        document.getElementById('mic-status').textContent = "Listening...";
-        document.getElementById('dot').classList.add('active');
-      };
-
-      rec.onend = () => {
-        document.getElementById('dot').classList.remove('active');
-        if (isRunning) {
-          try { rec.start(); } catch(e) {}
-        } else {
-          document.getElementById('mic-status').textContent = "Mic Off";
+      // Silent background restart without triggering Android beep loop
+      recognition.onend = () => {
+        if (quizActive) {
+          try { recognition.start(); } catch(e){}
         }
       };
 
-      rec.onresult = (event) => {
-        if (answered) return;
+      recognition.onresult = (event) => {
+        if (answered || !quizActive) return;
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          for (let j = 0; j < event.results[i].length; j++) {
-            const text = event.results[i][j].transcript.toLowerCase().trim();
-            document.getElementById('heard-text').textContent = `Heard: "${text}"`;
+          const text = event.results[i][0].transcript.toLowerCase().trim();
+          document.getElementById('heard-text').textContent = `Heard: "${text}"`;
 
-            const digit = parseDigit(text);
-            if (digit !== null) {
-              checkAnswer(digit);
-              return;
-            }
+          const digit = parseDigit(text);
+          if (digit !== null) {
+            handleInput(digit);
+            break;
           }
         }
       };
-
-      rec.onerror = (e) => {
-        document.getElementById('heard-text').textContent = `Speech error: ${e.error}`;
-      };
-
-      return rec;
     }
 
     function parseDigit(str) {
@@ -173,7 +165,7 @@
       }
 
       answered = false;
-      document.getElementById('heard-text').textContent = 'Listening for answer...';
+      document.getElementById('heard-text').textContent = 'Listening...';
 
       const num1 = Math.floor(Math.random() * 10);
       const num2 = Math.floor(Math.random() * (num1 + 1));
@@ -199,8 +191,10 @@
       }, 50);
     }
 
-    function checkAnswer(val) {
+    function handleInput(val) {
+      if (answered) return;
       answered = true;
+
       if (val === currentAns) {
         stats.correct++;
         document.getElementById('hud-correct').textContent = stats.correct;
@@ -213,35 +207,30 @@
       }
     }
 
-    // Direct event listener triggers mic permissions directly within user gesture context
-    document.getElementById('start-btn').addEventListener('click', function() {
+    document.getElementById('start-btn').addEventListener('click', () => {
       stats = { total: 0, correct: 0, incorrect: 0, skipped: 0 };
       currentAns = null;
-      isRunning = true;
-      
+      quizActive = true;
+
       document.getElementById('hud-total').textContent = "0";
       document.getElementById('hud-correct').textContent = "0";
 
       document.getElementById('start-view').classList.add('hide');
       document.getElementById('quiz-view').classList.remove('hide');
 
-      if (!recognition) {
-        recognition = initSpeech();
-      }
-
       if (recognition) {
-        try { recognition.start(); } catch(e) {}
+        try { recognition.start(); } catch(e){}
       }
 
       nextQuestion();
     });
 
     document.getElementById('finish-btn').addEventListener('click', () => {
-      isRunning = false;
+      quizActive = false;
       clearInterval(timerInterval);
 
       if (recognition) {
-        try { recognition.stop(); } catch(e) {}
+        try { recognition.stop(); } catch(e){}
       }
 
       if (!answered && currentAns !== null) {
