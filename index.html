@@ -7,16 +7,13 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: #f0f4f8; color: #102a43; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
-    .card { background: #fff; width: 100%; max-width: 420px; border-radius: 16px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+    .card { background: #fff; width: 100%; max-width: 400px; border-radius: 16px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
     h1 { font-size: 1.4rem; color: #2b6cb0; margin-bottom: 8px; }
     .subtitle { font-size: 0.85rem; color: #627d98; margin-bottom: 20px; }
     
-    .btn { background: #2b6cb0; color: #fff; border: none; padding: 14px 24px; font-size: 1rem; font-weight: 600; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 10px; }
-    .btn:active { transform: scale(0.98); }
+    .btn { background: #2b6cb0; color: #fff; border: none; padding: 14px 24px; font-size: 1.1rem; font-weight: 600; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 10px; -webkit-tap-highlight-color: transparent; }
+    .btn:active { transform: scale(0.98); background: #2c5282; }
     .btn-secondary { background: #4a5568; }
-
-    .setting-group { margin: 15px 0; text-align: left; font-size: 0.9rem; color: #4a5568; }
-    .setting-group select { width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid #cbd5e0; font-size: 1rem; }
 
     .timer-container { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 15px; }
     .timer-bar { height: 100%; width: 100%; background: #3182ce; transition: width 0.05s linear; }
@@ -27,11 +24,12 @@
     .feedback.incorrect { color: #e53e3e; }
     .feedback.skipped { color: #d69e2e; }
 
-    .transcript-box { font-size: 0.9rem; color: #2b6cb0; background: #ebf8ff; padding: 10px; border-radius: 8px; margin-top: 15px; font-weight: 600; border: 1px solid #bee3f8; }
+    .transcript-box { font-size: 0.95rem; color: #2b6cb0; background: #ebf8ff; padding: 12px; border-radius: 8px; margin-top: 15px; font-weight: 600; border: 1px solid #bee3f8; min-height: 48px; display: flex; align-items: center; justify-content: center; }
     .status-indicator { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.8rem; color: #38a169; margin-top: 10px; }
-    .dot { width: 8px; height: 8px; background: #38a169; border-radius: 50%; animation: blink 1s infinite; }
+    .dot { width: 8px; height: 8px; background: #38a169; border-radius: 50%; }
+    .dot.active { animation: blink 0.8s infinite; }
     
-    @keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+    @keyframes blink { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
 
     .hud { display: flex; justify-content: space-between; background: #f7fafc; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 15px; border: 1px solid #edf2f7; }
     .hide { display: none !important; }
@@ -43,16 +41,11 @@
     <h1>Math Voice Practice</h1>
     <p class="subtitle">Single-Digit Subtraction Game</p>
 
-    <!-- Setup View -->
+    <!-- Start View -->
     <div id="start-view">
-      <div class="setting-group">
-        <label for="timer-select">Question Duration:</label>
-        <select id="timer-select">
-          <option value="3000" selected>3 Seconds (Fast)</option>
-          <option value="4000">4 Seconds (Recommended for Mobile)</option>
-          <option value="5000">5 Seconds (Relaxed)</option>
-        </select>
-      </div>
+      <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 20px;">
+        Tap <strong>Start Practice</strong> and allow microphone access when prompted.
+      </p>
       <button class="btn" id="start-btn">Start Practice</button>
     </div>
 
@@ -67,11 +60,11 @@
       <div id="question" class="question-box">?-?</div>
       <div id="feedback" class="feedback"></div>
 
-      <div id="heard-text" class="transcript-box">Listening for voice...</div>
+      <div id="heard-text" class="transcript-box">Tap start to speak...</div>
       
       <div class="status-indicator">
-        <div class="dot"></div>
-        <span id="mic-status">Mic Active</span>
+        <div id="dot" class="dot"></div>
+        <span id="mic-status">Mic Ready</span>
       </div>
 
       <button class="btn btn-secondary" id="finish-btn" style="margin-top: 20px;">Stop & View Results</button>
@@ -91,10 +84,9 @@
   </div>
 
   <script>
-    // Homophone map for numbers 0-9
     const NUMBER_MAP = {
-      'zero': 0, 'oh': 0, 'zip': 0,
-      'one': 1, 'won': 1,
+      'zero': 0, 'oh': 0, 'zip': 0, 'nil': 0,
+      'one': 1, 'won': 1, '1st': 1,
       'two': 2, 'to': 2, 'too': 2,
       'three': 3, 'tree': 3, 'free': 3,
       'four': 4, 'for': 4, 'fore': 4,
@@ -102,54 +94,66 @@
       'six': 6, 'sex': 6,
       'seven': 7,
       'eight': 8, 'ate': 8,
-      'nine': 9
+      'nine': 9, 'nein': 9
     };
 
     let currentAns = null;
     let answered = false;
     let timerInterval = null;
     let startTime = 0;
-    let duration = 3000;
+    const DURATION = 3000;
 
     let stats = { total: 0, correct: 0, incorrect: 0, skipped: 0 };
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition = null;
-    let shouldListen = false;
+    let isRunning = false;
 
-    if (SpeechRecognition) {
-      recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
+    function initSpeech() {
+      if (!SpeechRecognition) return null;
 
-      recognition.onstart = () => {
-        document.getElementById('mic-status').textContent = "Mic Active";
+      const rec = new SpeechRecognition();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.maxAlternatives = 3;
+      rec.lang = 'en-US';
+
+      rec.onstart = () => {
+        document.getElementById('mic-status').textContent = "Listening...";
+        document.getElementById('dot').classList.add('active');
       };
 
-      recognition.onend = () => {
-        // Force restart microphone session on mobile disconnects
-        if (shouldListen) {
-          try { recognition.start(); } catch(e) {}
+      rec.onend = () => {
+        document.getElementById('dot').classList.remove('active');
+        if (isRunning) {
+          try { rec.start(); } catch(e) {}
+        } else {
+          document.getElementById('mic-status').textContent = "Mic Off";
         }
       };
 
-      recognition.onresult = (event) => {
+      rec.onresult = (event) => {
         if (answered) return;
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          const text = event.results[i][0].transcript.toLowerCase().trim();
-          document.getElementById('heard-text').textContent = `Heard: "${text}"`;
+          for (let j = 0; j < event.results[i].length; j++) {
+            const text = event.results[i][j].transcript.toLowerCase().trim();
+            document.getElementById('heard-text').textContent = `Heard: "${text}"`;
 
-          const digit = parseDigit(text);
-          if (digit !== null) {
-            checkAnswer(digit);
-            break;
+            const digit = parseDigit(text);
+            if (digit !== null) {
+              checkAnswer(digit);
+              return;
+            }
           }
         }
       };
-    } else {
-      alert("Web Speech API is not supported on this browser. Please use Chrome on Android.");
+
+      rec.onerror = (e) => {
+        document.getElementById('heard-text').textContent = `Speech error: ${e.error}`;
+      };
+
+      return rec;
     }
 
     function parseDigit(str) {
@@ -169,9 +173,8 @@
       }
 
       answered = false;
-      document.getElementById('heard-text').textContent = 'Listening...';
+      document.getElementById('heard-text').textContent = 'Listening for answer...';
 
-      // Ensure subtraction result remains non-negative (0 to 9)
       const num1 = Math.floor(Math.random() * 10);
       const num2 = Math.floor(Math.random() * (num1 + 1));
       currentAns = num1 - num2;
@@ -185,8 +188,8 @@
 
       timerInterval = setInterval(() => {
         const elapsed = Date.now() - startTime;
-        const remaining = Math.max(0, duration - elapsed);
-        const pct = (remaining / duration) * 100;
+        const remaining = Math.max(0, DURATION - elapsed);
+        const pct = (remaining / DURATION) * 100;
         document.getElementById('timer-bar').style.width = pct + '%';
 
         if (remaining <= 0) {
@@ -210,10 +213,11 @@
       }
     }
 
-    document.getElementById('start-btn').addEventListener('click', () => {
-      duration = parseInt(document.getElementById('timer-select').value);
+    // Direct event listener triggers mic permissions directly within user gesture context
+    document.getElementById('start-btn').addEventListener('click', function() {
       stats = { total: 0, correct: 0, incorrect: 0, skipped: 0 };
       currentAns = null;
+      isRunning = true;
       
       document.getElementById('hud-total').textContent = "0";
       document.getElementById('hud-correct').textContent = "0";
@@ -221,7 +225,10 @@
       document.getElementById('start-view').classList.add('hide');
       document.getElementById('quiz-view').classList.remove('hide');
 
-      shouldListen = true;
+      if (!recognition) {
+        recognition = initSpeech();
+      }
+
       if (recognition) {
         try { recognition.start(); } catch(e) {}
       }
@@ -230,7 +237,7 @@
     });
 
     document.getElementById('finish-btn').addEventListener('click', () => {
-      shouldListen = false;
+      isRunning = false;
       clearInterval(timerInterval);
 
       if (recognition) {
