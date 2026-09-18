@@ -3,196 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Voice Subtraction Practice (Mobile Optimized)</title>
+  <title>Voice Subtraction Practice</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #f0f4f8; color: #102a43; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
+    .card { background: #fff; width: 100%; max-width: 420px; border-radius: 16px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+    h1 { font-size: 1.4rem; color: #2b6cb0; margin-bottom: 8px; }
+    .subtitle { font-size: 0.85rem; color: #627d98; margin-bottom: 20px; }
+    
+    .btn { background: #2b6cb0; color: #fff; border: none; padding: 14px 24px; font-size: 1rem; font-weight: 600; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 10px; }
+    .btn:active { transform: scale(0.98); }
+    .btn-secondary { background: #4a5568; }
 
-    body {
-      background-color: #f0f4f8;
-      color: #102a43;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 15px;
-    }
+    .setting-group { margin: 15px 0; text-align: left; font-size: 0.9rem; color: #4a5568; }
+    .setting-group select { width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid #cbd5e0; font-size: 1rem; }
 
-    .card {
-      background: #ffffff;
-      width: 100%;
-      max-width: 420px;
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-      text-align: center;
-      position: relative;
-    }
+    .timer-container { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 15px; }
+    .timer-bar { height: 100%; width: 100%; background: #3182ce; transition: width 0.05s linear; }
 
-    h1 {
-      font-size: 1.4rem;
-      margin-bottom: 8px;
-      color: #334e68;
-    }
-
-    p.subtitle {
-      font-size: 0.85rem;
-      color: #627d98;
-      margin-bottom: 20px;
-    }
-
-    /* Start / Control Screen */
-    .btn {
-      background-color: #2b6cb0;
-      color: #ffffff;
-      border: none;
-      padding: 14px 28px;
-      font-size: 1.1rem;
-      font-weight: 600;
-      border-radius: 12px;
-      cursor: pointer;
-      width: 100%;
-      margin-top: 10px;
-      box-shadow: 0 4px 12px rgba(43, 108, 176, 0.3);
-      transition: background 0.2s;
-    }
-
-    .btn:active {
-      transform: scale(0.98);
-      background-color: #2c5282;
-    }
-
-    .btn-secondary {
-      background-color: #4a5568;
-      box-shadow: none;
-    }
-
-    /* Timer Bar */
-    .timer-container {
-      width: 100%;
-      height: 8px;
-      background-color: #e2e8f0;
-      border-radius: 4px;
-      overflow: hidden;
-      margin-bottom: 20px;
-    }
-
-    .timer-bar {
-      height: 100%;
-      width: 100%;
-      background-color: #3182ce;
-      transition: width 0.05s linear;
-    }
-
-    /* Question Display */
-    .question-box {
-      font-size: 3.5rem;
-      font-weight: 800;
-      color: #102a43;
-      margin: 15px 0;
-      min-height: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* Feedback Overlay */
-    .feedback {
-      font-size: 2rem;
-      font-weight: bold;
-      min-height: 40px;
-      margin-bottom: 10px;
-    }
-
+    .question-box { font-size: 3.5rem; font-weight: 800; margin: 10px 0; color: #102a43; }
+    .feedback { font-size: 1.8rem; font-weight: bold; min-height: 40px; }
     .feedback.correct { color: #38a169; }
     .feedback.incorrect { color: #e53e3e; }
     .feedback.skipped { color: #d69e2e; }
 
-    /* Live Voice Indicator */
-    .voice-status {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-size: 0.85rem;
-      color: #48bb78;
-      font-weight: 600;
-      margin-top: 10px;
-      min-height: 24px;
-    }
+    .transcript-box { font-size: 0.9rem; color: #2b6cb0; background: #ebf8ff; padding: 10px; border-radius: 8px; margin-top: 15px; font-weight: 600; border: 1px solid #bee3f8; }
+    .status-indicator { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.8rem; color: #38a169; margin-top: 10px; }
+    .dot { width: 8px; height: 8px; background: #38a169; border-radius: 50%; animation: blink 1s infinite; }
+    
+    @keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
-    .dot {
-      width: 10px;
-      height: 10px;
-      background-color: #48bb78;
-      border-radius: 50%;
-      animation: pulse 1.2s infinite;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(0.8); opacity: 0.5; }
-      50% { transform: scale(1.2); opacity: 1; }
-      100% { transform: scale(0.8); opacity: 0.5; }
-    }
-
-    .transcript-box {
-      font-size: 0.9rem;
-      color: #718096;
-      margin-top: 8px;
-      min-height: 20px;
-      font-style: italic;
-    }
-
-    /* Stats HUD */
-    .hud {
-      display: flex;
-      justify-content: space-between;
-      background: #f7fafc;
-      padding: 10px 15px;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      color: #4a5568;
-      margin-bottom: 15px;
-      border: 1px solid #edf2f7;
-    }
-
-    /* Modal / Results */
-    .modal {
-      display: none;
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: white;
-      border-radius: 20px;
-      padding: 24px;
-      flex-direction: column;
-      justify-content: center;
-      z-index: 10;
-    }
-
-    .results-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin: 20px 0;
-    }
-
-    .result-card {
-      background: #f7fafc;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid #e2e8f0;
-    }
-
-    .result-card .num {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-top: 4px;
-    }
-
+    .hud { display: flex; justify-content: space-between; background: #f7fafc; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 15px; border: 1px solid #edf2f7; }
     .hide { display: none !important; }
   </style>
 </head>
@@ -200,206 +41,153 @@
 
   <div class="card">
     <h1>Math Voice Practice</h1>
-    <p class="subtitle">3 Seconds per Question • Single Digit Subtraction</p>
+    <p class="subtitle">Single-Digit Subtraction Game</p>
 
-    <!-- Start View -->
+    <!-- Setup View -->
     <div id="start-view">
-      <p style="font-size: 0.95rem; color: #4a5568; margin-bottom: 20px;">
-        Tap the button below and speak your answer clearly during each 3-second timer.
-      </p>
-      <button class="btn" id="start-btn">Start Quiz</button>
+      <div class="setting-group">
+        <label for="timer-select">Question Duration:</label>
+        <select id="timer-select">
+          <option value="3000" selected>3 Seconds (Fast)</option>
+          <option value="4000">4 Seconds (Recommended for Mobile)</option>
+          <option value="5000">5 Seconds (Relaxed)</option>
+        </select>
+      </div>
+      <button class="btn" id="start-btn">Start Practice</button>
     </div>
 
     <!-- Active Quiz View -->
     <div id="quiz-view" class="hide">
       <div class="hud">
-        <span>Questions: <strong id="hud-total">0</strong></span>
+        <span>Total: <strong id="hud-total">0</strong></span>
         <span>Correct: <strong id="hud-correct" style="color:#38a169;">0</strong></span>
       </div>
 
-      <div class="timer-container">
-        <div id="timer-bar" class="timer-bar"></div>
-      </div>
-
+      <div class="timer-container"><div id="timer-bar" class="timer-bar"></div></div>
       <div id="question" class="question-box">?-?</div>
-
       <div id="feedback" class="feedback"></div>
 
-      <div class="voice-status">
+      <div id="heard-text" class="transcript-box">Listening for voice...</div>
+      
+      <div class="status-indicator">
         <div class="dot"></div>
-        <span id="mic-text">Microphone Active</span>
+        <span id="mic-status">Mic Active</span>
       </div>
 
-      <div id="heard-text" class="transcript-box">Heard: -</div>
-
-      <button class="btn btn-secondary" id="finish-btn" style="margin-top: 25px;">Stop & Show Results</button>
+      <button class="btn btn-secondary" id="finish-btn" style="margin-top: 20px;">Stop & View Results</button>
     </div>
 
-    <!-- Results Modal -->
-    <div id="results-modal" class="modal">
-      <h2>Session Complete</h2>
-      <div class="results-grid">
-        <div class="result-card">
-          <div>Total Asked</div>
-          <div id="res-total" class="num">0</div>
-        </div>
-        <div class="result-card">
-          <div>Correct</div>
-          <div id="res-correct" class="num" style="color: #38a169;">0</div>
-        </div>
-        <div class="result-card">
-          <div>Incorrect</div>
-          <div id="res-incorrect" class="num" style="color: #e53e3e;">0</div>
-        </div>
-        <div class="result-card">
-          <div>Unanswered</div>
-          <div id="res-unanswered" class="num" style="color: #d69e2e;">0</div>
-        </div>
+    <!-- Results View -->
+    <div id="results-view" class="hide">
+      <h2>Session Summary</h2>
+      <div style="margin: 20px 0; text-align: left; line-height: 2;">
+        <p>Total Questions: <strong id="res-total">0</strong></p>
+        <p style="color: #38a169;">Correct Answers: <strong id="res-correct">0</strong></p>
+        <p style="color: #e53e3e;">Incorrect Answers: <strong id="res-incorrect">0</strong></p>
+        <p style="color: #d69e2e;">Unanswered/Skipped: <strong id="res-skipped">0</strong></p>
       </div>
-
       <button class="btn" id="restart-btn">Try Again</button>
     </div>
   </div>
 
   <script>
-    // Numbers & homophones mapping for Speech-to-Text quirks
+    // Homophone map for numbers 0-9
     const NUMBER_MAP = {
-      'zero': 0, 'oh': 0, 'zip': 0, 'nil': 0,
-      'one': 1, 'won': 1, '1st': 1,
+      'zero': 0, 'oh': 0, 'zip': 0,
+      'one': 1, 'won': 1,
       'two': 2, 'to': 2, 'too': 2,
       'three': 3, 'tree': 3, 'free': 3,
-      'four': 4, 'for': 4, 'fore': 4, 'door': 4,
+      'four': 4, 'for': 4, 'fore': 4,
       'five': 5, 'hive': 5,
-      'six': 6, 'sex': 6, 'sticks': 6,
+      'six': 6, 'sex': 6,
       'seven': 7,
       'eight': 8, 'ate': 8,
-      'nine': 9, 'nein': 9
+      'nine': 9
     };
 
-    // State
     let currentAns = null;
-    let answeredThisRound = false;
+    let answered = false;
     let timerInterval = null;
     let startTime = 0;
-    const DURATION = 3000; // 3 seconds per question
+    let duration = 3000;
 
-    let stats = {
-      total: 0,
-      correct: 0,
-      incorrect: 0,
-      unanswered: 0
-    };
+    let stats = { total: 0, correct: 0, incorrect: 0, skipped: 0 };
 
-    // DOM Elements
-    const startView = document.getElementById('start-view');
-    const quizView = document.getElementById('quiz-view');
-    const resultsModal = document.getElementById('results-modal');
-    
-    const startBtn = document.getElementById('start-btn');
-    const finishBtn = document.getElementById('finish-btn');
-    const restartBtn = document.getElementById('restart-btn');
-
-    const questionEl = document.getElementById('question');
-    const feedbackEl = document.getElementById('feedback');
-    const heardTextEl = document.getElementById('heard-text');
-    const timerBar = document.getElementById('timer-bar');
-
-    const hudTotal = document.getElementById('hud-total');
-    const hudCorrect = document.getElementById('hud-correct');
-
-    // Speech Recognition Setup
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition = null;
-    let isListening = false;
+    let shouldListen = false;
 
-    if (!SpeechRecognition) {
-      alert("Speech Recognition is not supported by your browser. Please try Google Chrome on Android.");
-    } else {
+    if (SpeechRecognition) {
       recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = 'en-US';
 
-      recognition.onstart = () => { isListening = true; };
-      recognition.onend = () => { 
-        isListening = false;
-        // Keep mic alive on mobile continuously
-        if (!quizView.classList.contains('hide')) {
-          try { recognition.start(); } catch(e){}
+      recognition.onstart = () => {
+        document.getElementById('mic-status').textContent = "Mic Active";
+      };
+
+      recognition.onend = () => {
+        // Force restart microphone session on mobile disconnects
+        if (shouldListen) {
+          try { recognition.start(); } catch(e) {}
         }
       };
 
       recognition.onresult = (event) => {
-        if (answeredThisRound) return; // Ignore multiple spoken inputs in 1 question window
+        if (answered) return;
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript.toLowerCase().trim();
-          heardTextEl.textContent = `Heard: "${transcript}"`;
+          const text = event.results[i][0].transcript.toLowerCase().trim();
+          document.getElementById('heard-text').textContent = `Heard: "${text}"`;
 
-          const parsedNumber = extractDigit(transcript);
-          if (parsedNumber !== null) {
-            validateAnswer(parsedNumber);
+          const digit = parseDigit(text);
+          if (digit !== null) {
+            checkAnswer(digit);
             break;
           }
         }
       };
+    } else {
+      alert("Web Speech API is not supported on this browser. Please use Chrome on Android.");
     }
 
-    // Helper: Parse spoken text to single digit number
-    function extractDigit(str) {
-      // Direct numeric check
+    function parseDigit(str) {
       const words = str.split(/\s+/);
-      for (let word of words) {
-        if (!isNaN(parseInt(word)) && parseInt(word) >= 0 && parseInt(word) <= 9) {
-          return parseInt(word);
-        }
-        if (NUMBER_MAP.hasOwnProperty(word)) {
-          return NUMBER_MAP[word];
-        }
+      for (let w of words) {
+        if (!isNaN(parseInt(w)) && parseInt(w) >= 0 && parseInt(w) <= 9) return parseInt(w);
+        if (NUMBER_MAP.hasOwnProperty(w)) return NUMBER_MAP[w];
       }
       return null;
     }
 
-    // Safe mic handle
-    function ensureMicActive() {
-      if (recognition && !isListening) {
-        try { recognition.start(); } catch(e){}
-      }
-    }
-
-    // Game Logic
     function nextQuestion() {
-      // Evaluate if previous question was missed
-      if (!answeredThisRound && currentAns !== null) {
-        stats.unanswered++;
-        feedbackEl.textContent = "Skipped";
-        feedbackEl.className = "feedback skipped";
+      if (!answered && currentAns !== null) {
+        stats.skipped++;
+        document.getElementById('feedback').textContent = 'Skipped';
+        document.getElementById('feedback').className = 'feedback skipped';
       }
 
-      ensureMicActive();
+      answered = false;
+      document.getElementById('heard-text').textContent = 'Listening...';
 
-      // Reset question state
-      answeredThisRound = false;
-      heardTextEl.textContent = "Heard: -";
-
-      // Generate Single-Digit Subtraction (Ensure Non-negative result)
+      // Ensure subtraction result remains non-negative (0 to 9)
       const num1 = Math.floor(Math.random() * 10);
       const num2 = Math.floor(Math.random() * (num1 + 1));
       currentAns = num1 - num2;
 
       stats.total++;
-      hudTotal.textContent = stats.total;
-      questionEl.textContent = `${num1} - ${num2} = ?`;
+      document.getElementById('hud-total').textContent = stats.total;
+      document.getElementById('question').textContent = `${num1} - ${num2} = ?`;
 
-      // Start 3s Timer Animation
       startTime = Date.now();
       clearInterval(timerInterval);
-      
+
       timerInterval = setInterval(() => {
         const elapsed = Date.now() - startTime;
-        const remaining = Math.max(0, DURATION - elapsed);
-        const pct = (remaining / DURATION) * 100;
-        timerBar.style.width = pct + "%";
+        const remaining = Math.max(0, duration - elapsed);
+        const pct = (remaining / duration) * 100;
+        document.getElementById('timer-bar').style.width = pct + '%';
 
         if (remaining <= 0) {
           clearInterval(timerInterval);
@@ -408,60 +196,64 @@
       }, 50);
     }
 
-    function validateAnswer(userVal) {
-      answeredThisRound = true;
-
-      if (userVal === currentAns) {
+    function checkAnswer(val) {
+      answered = true;
+      if (val === currentAns) {
         stats.correct++;
-        hudCorrect.textContent = stats.correct;
-        feedbackEl.textContent = "✓ Correct";
-        feedbackEl.className = "feedback correct";
+        document.getElementById('hud-correct').textContent = stats.correct;
+        document.getElementById('feedback').textContent = '✓ Correct';
+        document.getElementById('feedback').className = 'feedback correct';
       } else {
         stats.incorrect++;
-        feedbackEl.textContent = `✗ Wrong (${userVal})`;
-        feedbackEl.className = "feedback incorrect";
+        document.getElementById('feedback').textContent = `✗ Wrong (${val})`;
+        document.getElementById('feedback').className = 'feedback incorrect';
       }
     }
 
-    function startQuiz() {
-      stats = { total: 0, correct: 0, incorrect: 0, unanswered: 0 };
+    document.getElementById('start-btn').addEventListener('click', () => {
+      duration = parseInt(document.getElementById('timer-select').value);
+      stats = { total: 0, correct: 0, incorrect: 0, skipped: 0 };
       currentAns = null;
-      hudTotal.textContent = "0";
-      hudCorrect.textContent = "0";
+      
+      document.getElementById('hud-total').textContent = "0";
+      document.getElementById('hud-correct').textContent = "0";
 
-      startView.classList.add('hide');
-      resultsModal.style.display = 'none';
-      quizView.classList.remove('hide');
+      document.getElementById('start-view').classList.add('hide');
+      document.getElementById('quiz-view').classList.remove('hide');
 
-      ensureMicActive();
-      nextQuestion();
-    }
-
-    function stopQuiz() {
-      clearInterval(timerInterval);
+      shouldListen = true;
       if (recognition) {
-        try { recognition.stop(); } catch(e){}
+        try { recognition.start(); } catch(e) {}
       }
 
-      // Check final state
-      if (!answeredThisRound && currentAns !== null) {
-        stats.unanswered++;
+      nextQuestion();
+    });
+
+    document.getElementById('finish-btn').addEventListener('click', () => {
+      shouldListen = false;
+      clearInterval(timerInterval);
+
+      if (recognition) {
+        try { recognition.stop(); } catch(e) {}
       }
 
-      // Render Modal
+      if (!answered && currentAns !== null) {
+        stats.skipped++;
+      }
+
       document.getElementById('res-total').textContent = stats.total;
       document.getElementById('res-correct').textContent = stats.correct;
       document.getElementById('res-incorrect').textContent = stats.incorrect;
-      document.getElementById('res-unanswered').textContent = stats.unanswered;
+      document.getElementById('res-skipped').textContent = stats.skipped;
 
-      quizView.classList.add('hide');
-      resultsModal.style.display = 'flex';
-    }
+      document.getElementById('quiz-view').classList.add('hide');
+      document.getElementById('results-view').classList.remove('hide');
+    });
 
-    // Listeners
-    startBtn.addEventListener('click', startQuiz);
-    finishBtn.addEventListener('click', stopQuiz);
-    restartBtn.addEventListener('click', startQuiz);
+    document.getElementById('restart-btn').addEventListener('click', () => {
+      document.getElementById('results-view').classList.add('hide');
+      document.getElementById('start-view').classList.remove('hide');
+    });
   </script>
 </body>
 </html>
